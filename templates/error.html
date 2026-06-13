@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ code }} Error{% endblock %}
+
+{% block content %}
+<div class="error-page">
+  <span class="error-page__code">{{ code }}</span>
+  <h1 class="error-page__title">{{ message }}</h1>
+  {% if code == 403 %}
+    <p class="error-page__desc">You don't have permission to access this page.</p>
+  {% elif code == 404 %}
+    <p class="error-page__desc">The page you're looking for doesn't exist or has been moved.</p>
+  {% else %}
+    <p class="error-page__desc">Something went wrong. Please try again later.</p>
+  {% endif %}
+  <a href="{{ url_for('index') }}" class="btn btn--primary">Go to Home</a>
+</div>
+{% endblock %}
