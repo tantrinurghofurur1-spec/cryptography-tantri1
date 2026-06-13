@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}My Books{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">My Books</h1>
+    <p class="page-subtitle">Manage your current loans and view your borrowing history</p>
+  </div>
+  <a href="{{ url_for('index') }}" class="btn btn--primary">Browse Catalog</a>
+</div>
+
+<!-- Active borrowings -->
+<section class="section">
+  <h2 class="section-title">Currently Borrowed
+    <span class="badge badge--count">{{ active|length }}</span>
+  </h2>
+
+  {% if active %}
+    <div class="borrowing-list">
+      {% for b in active %}
+        {% set overdue = b.due_date and b.due_date.replace(tzinfo=none) < now.replace(tzinfo=none) %}
+        <div class="borrowing-card {% if overdue %}borrowing-card--overdue{% endif %}">
+          <div class="borrowing-card__info">
+            <a href="{{ url_for('book_detail', book_id=b.book.id) }}" class="borrowing-card__title">
+              {{ b.book.title }}
+            </a>
+            <p class="borrowing-card__author">{{ b.book.author }}</p>
+            <div class="borrowing-card__dates">
+              <span>Borrowed: <strong>{{ b.borrow_date.strftime('%b %d, %Y') }}</strong></span>
+              {% if b.due_date %}
+                <span class="{% if overdue %}text--danger{% endif %}">
+                  Due: <strong>{{ b.due_date.strftime('%b %d, %Y') }}</strong>
+                  {% if overdue %} ⚠️ Overdue{% endif %}
+                </span>
+              {% endif %}
+            </div>
+          </div>
+          <form action="{{ url_for('return_book', borrowing_id=b.id) }}" method="post">
+            <button type="submit" class="btn btn--secondary btn--sm">Return</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state empty-state--sm">
+      <span class="empty-state__icon">📭</span>
+      <p>You have no active borrowings. <a href="{{ url_for('index') }}" class="link">Browse the catalog</a> to find something to read.</p>
+    </div>
+  {% endif %}
+</section>
+
+<!-- Borrowing history -->
+<section class="section">
+  <h2 class="section-title">Borrowing History
+    <span class="badge badge--count">{{ history|length }}</span>
+  </h2>
+
+  {% if history %}
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Book</th>
+            <th>Author</th>
+            <th>Borrowed</th>
+            <th>Returned</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in history %}
+            <tr>
+              <td>
+                <a href="{{ url_for('book_detail', book_id=b.book.id) }}" class="link">{{ b.book.title }}</a>
+              </td>
+              <td>{{ b.book.author }}</td>
+              <td>{{ b.borrow_date.strftime('%b %d, %Y') }}</td>
+              <td>{{ b.return_date.strftime('%b %d, %Y') if b.return_date else '—' }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state empty-state--sm">
+      <span class="empty-state__icon">📋</span>
+      <p>No borrowing history yet.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

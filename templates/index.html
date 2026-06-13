@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Book Catalog{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Book Catalog</h1>
+    <p class="page-subtitle">Browse and borrow from our collection of {{ books|length }} book{{ 's' if books|length != 1 else '' }}</p>
+  </div>
+</div>
+
+<!-- Search bar -->
+<form method="get" action="{{ url_for('index') }}" class="search-form">
+  <div class="search-wrapper">
+    <span class="search-icon">🔍</span>
+    <input
+      type="text"
+      name="q"
+      value="{{ query }}"
+      placeholder="Search by title, author, or ISBN…"
+      class="search-input"
+      autofocus
+    />
+    {% if query %}
+      <a href="{{ url_for('index') }}" class="search-clear">✕</a>
+    {% endif %}
+    <button type="submit" class="btn btn--primary">Search</button>
+  </div>
+</form>
+
+{% if query %}
+  <p class="search-results-label">
+    Showing results for <strong>"{{ query }}"</strong>
+  </p>
+{% endif %}
+
+{% if books %}
+  <div class="book-grid">
+    {% for book in books %}
+      <a href="{{ url_for('book_detail', book_id=book.id) }}" class="book-card">
+        <div class="book-card__cover">
+          <span class="book-card__icon">📖</span>
+        </div>
+        <div class="book-card__body">
+          <h3 class="book-card__title">{{ book.title }}</h3>
+          <p class="book-card__author">{{ book.author }}</p>
+          {% if book.year %}
+            <p class="book-card__year">{{ book.year }}</p>
+          {% endif %}
+          <div class="book-card__footer">
+            {% if book.available > 0 %}
+              <span class="badge badge--available">{{ book.available }} available</span>
+            {% else %}
+              <span class="badge badge--unavailable">Unavailable</span>
+            {% endif %}
+            <span class="book-card__qty">of {{ book.quantity }}</span>
+          </div>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty-state">
+    <span class="empty-state__icon">📭</span>
+    <h2>No books found</h2>
+    {% if query %}
+      <p>Try a different search term or <a href="{{ url_for('index') }}">browse all books</a>.</p>
+    {% else %}
+      <p>The catalog is empty. Check back soon!</p>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

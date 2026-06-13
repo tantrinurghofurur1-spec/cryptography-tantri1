@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Admin Dashboard</h1>
+    <p class="page-subtitle">Manage the library catalog, borrowings, and users</p>
+  </div>
+  <a href="{{ url_for('admin_add_book') }}" class="btn btn--primary">+ Add Book</a>
+</div>
+
+<!-- Stats row -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="stat-card__value">{{ books|length }}</span>
+    <span class="stat-card__label">Total Books</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-card__value">{{ active_borrowings|length }}</span>
+    <span class="stat-card__label">Active Loans</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-card__value">{{ users|length }}</span>
+    <span class="stat-card__label">Registered Users</span>
+  </div>
+</div>
+
+<!-- Book catalog management -->
+<section class="section">
+  <h2 class="section-title">Book Catalog</h2>
+  {% if books %}
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>ISBN</th>
+            <th>Year</th>
+            <th>Qty</th>
+            <th>Available</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for book in books %}
+            <tr>
+              <td>
+                <a href="{{ url_for('book_detail', book_id=book.id) }}" class="link">{{ book.title }}</a>
+              </td>
+              <td>{{ book.author }}</td>
+              <td class="text--muted">{{ book.isbn or '—' }}</td>
+              <td class="text--muted">{{ book.year or '—' }}</td>
+              <td>{{ book.quantity }}</td>
+              <td>
+                {% if book.available > 0 %}
+                  <span class="badge badge--available">{{ book.available }}</span>
+                {% else %}
+                  <span class="badge badge--unavailable">0</span>
+                {% endif %}
+              </td>
+              <td>
+                <form action="{{ url_for('admin_delete_book', book_id=book.id) }}" method="post"
+                      onsubmit="return confirm('Delete \'{{ book.title }}\'? This cannot be undone.')">
+                  <button type="submit" class="btn btn--danger btn--sm">Delete</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state empty-state--sm">
+      <p>No books in the catalog yet. <a href="{{ url_for('admin_add_book') }}" class="link">Add the first one</a>.</p>
+    </div>
+  {% endif %}
+</section>
+
+<!-- Active borrowings -->
+<section class="section">
+  <h2 class="section-title">Active Loans</h2>
+  {% if active_borrowings %}
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Book</th>
+            <th>Borrowed</th>
+            <th>Due</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in active_borrowings %}
+            <tr>
+              <td>{{ b.user.username }}</td>
+              <td>
+                <a href="{{ url_for('book_detail', book_id=b.book.id) }}" class="link">{{ b.book.title }}</a>
+              </td>
+              <td>{{ b.borrow_date.strftime('%b %d, %Y') }}</td>
+              <td>{{ b.due_date.strftime('%b %d, %Y') if b.due_date else '—' }}</td>
+              <td>
+                <form action="{{ url_for('return_book', borrowing_id=b.id) }}" method="post">
+                  <button type="submit" class="btn btn--secondary btn--sm">Mark Returned</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state empty-state--sm">
+      <p>No active loans at the moment.</p>
+    </div>
+  {% endif %}
+</section>
+
+<!-- User management -->
+<section class="section">
+  <h2 class="section-title">Users</h2>
+  <div class="table-wrapper">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Joined</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+          <tr>
+            <td>{{ user.username }}</td>
+            <td class="text--muted">{{ user.email }}</td>
+            <td>
+              {% if user.is_admin %}
+                <span class="badge badge--admin">Admin</span>
+              {% else %}
+                <span class="badge badge--user">User</span>
+              {% endif %}
+            </td>
+            <td class="text--muted">{{ user.created_at.strftime('%b %d, %Y') }}</td>
+            <td>
+              {% if not user.is_admin %}
+                <form action="{{ url_for('admin_promote_user', user_id=user.id) }}" method="post"
+                      onsubmit="return confirm('Promote {{ user.username }} to admin?')">
+                  <button type="submit" class="btn btn--ghost btn--sm">Promote</button>
+                </form>
+              {% else %}
+                <span class="text--muted">—</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

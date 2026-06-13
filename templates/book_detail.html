@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{{ url_for('index') }}" class="link">← Back to Catalog</a>
+</div>
+
+<div class="book-detail">
+  <div class="book-detail__cover">
+    <span class="book-detail__icon">📖</span>
+  </div>
+
+  <div class="book-detail__info">
+    <h1 class="book-detail__title">{{ book.title }}</h1>
+    <p class="book-detail__author">by <strong>{{ book.author }}</strong></p>
+
+    <div class="book-detail__meta">
+      {% if book.year %}
+        <span class="meta-item">
+          <span class="meta-label">Year</span>
+          <span class="meta-value">{{ book.year }}</span>
+        </span>
+      {% endif %}
+      {% if book.isbn %}
+        <span class="meta-item">
+          <span class="meta-label">ISBN</span>
+          <span class="meta-value">{{ book.isbn }}</span>
+        </span>
+      {% endif %}
+      <span class="meta-item">
+        <span class="meta-label">Copies</span>
+        <span class="meta-value">{{ book.quantity }} total</span>
+      </span>
+      <span class="meta-item">
+        <span class="meta-label">Available</span>
+        <span class="meta-value">
+          {% if book.available > 0 %}
+            <span class="badge badge--available">{{ book.available }}</span>
+          {% else %}
+            <span class="badge badge--unavailable">None</span>
+          {% endif %}
+        </span>
+      </span>
+    </div>
+
+    {% if book.description %}
+      <div class="book-detail__description">
+        <h2 class="section-title">About this book</h2>
+        <p>{{ book.description }}</p>
+      </div>
+    {% endif %}
+
+    <!-- Borrow / Return action -->
+    <div class="book-detail__action">
+      {% if current_user.is_authenticated %}
+        {% if active_borrowing %}
+          <div class="borrow-status">
+            <p class="borrow-status__text">
+              ✅ You borrowed this book on
+              <strong>{{ active_borrowing.borrow_date.strftime('%B %d, %Y') }}</strong>.
+              {% if active_borrowing.due_date %}
+                Due back by <strong>{{ active_borrowing.due_date.strftime('%B %d, %Y') }}</strong>.
+              {% endif %}
+            </p>
+            <form action="{{ url_for('return_book', borrowing_id=active_borrowing.id) }}" method="post">
+              <button type="submit" class="btn btn--secondary">Return This Book</button>
+            </form>
+          </div>
+        {% elif book.available > 0 %}
+          <form action="{{ url_for('borrow_book', book_id=book.id) }}" method="post">
+            <button type="submit" class="btn btn--primary btn--lg">Borrow This Book</button>
+          </form>
+          <p class="action-hint">Loan period: 14 days</p>
+        {% else %}
+          <button class="btn btn--disabled btn--lg" disabled>No Copies Available</button>
+          <p class="action-hint">Check back later when a copy is returned.</p>
+        {% endif %}
+      {% else %}
+        <a href="{{ url_for('login') }}" class="btn btn--primary btn--lg">Log in to Borrow</a>
+        <p class="action-hint">
+          Don't have an account? <a href="{{ url_for('register') }}" class="link">Register for free</a>
+        </p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
